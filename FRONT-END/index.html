@@ -1,0 +1,75 @@
+ 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon"   href="/streamsync icon.png" />
+    <link rel="stylesheet" href="/style.css">
+    <title>StreamSync</title>
+    
+</head>
+<body>
+    <img class="logo2" src="/streamsynclogo2.png" alt="">
+     <h2 class="playlisth2">Enter Playlist Link</h2>
+    <div class="input-btn">
+    
+    <input class="input-playlist" type="text" id="playlistUrl" placeholder="Enter Spotify, JioSaavn, or Gaana playlist link">
+    <button class="btn" onclick="fetchPlaylist()">Get Songs</button>
+</div>
+   <!--- <h3 class="">Playlist Songs:</h3>-->
+    <div id="songList"></div>
+
+    <script>
+        async function fetchPlaylist() {
+             document.querySelector('.btn').innerHTML="---"
+            const url = document.getElementById('playlistUrl').value;
+            if (!url) {
+                alert("Please enter a playlist link!");
+                return;
+            }
+
+            try {
+                const response = await fetch(`http://localhost:8080/api/playlists?url=${encodeURIComponent(url)}`);
+                const data = await response.json();
+
+                if (data.error) {
+                    alert("Error: " + data.error);
+                    return;
+                }
+
+                document.getElementById("songList").innerHTML = `<h3 class="platform-name"></h3>`;
+               
+                data.songs.forEach(song => {
+                    const videoId = extractYouTubeVideoId(song.youtube_link);
+                    if (videoId) {
+                        document.getElementById("songList").innerHTML += `
+                            <div class="video-container">
+                                <p class="p">${song.song}</p>
+                                <img src="https://img.youtube.com/vi/${videoId}/hqdefault.jpg" class="thumbnail" onclick="playVideo(this, '${videoId}')">
+                                <iframe src="https://www.youtube.com/embed/${videoId}" frameborder="0" allowfullscreen></iframe>
+                            </div>
+                        `;
+                    }
+                     document.querySelector('.btn').innerHTML="Get Songs"
+                });
+
+            } catch (error) {
+                alert("Failed to fetch playlist. Check the console for errors.");
+                console.error("Error fetching playlist:", error);
+            }
+        }
+
+        function extractYouTubeVideoId(url) {
+            const match = url.match(/v=([^&]+)/);
+            return match ? match[1] : null;
+        }
+
+        function playVideo(thumbnail, videoId) {
+            const iframe = thumbnail.nextElementSibling;
+            iframe.style.display = "block";  
+            thumbnail.style.display = "none"; 
+        }
+    </script>
+</body>
+</html>
